@@ -1,0 +1,9 @@
+# 项目排除路径
+/jc-club-application/jc-club-application-controller/target/
+/jc-club-application/jc-club-application-job/target/
+/jc-club-application/jc-club-application-mq/target/
+/jc-club-common/target/
+/jc-club-domain/target/
+/jc-club-infra/target/
+/jc-club-starter/target/
+/jc-club-subject-api/target/
