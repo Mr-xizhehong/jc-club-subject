@@ -85,14 +85,23 @@ public class SubjectCategoryDomainServiceImpl implements SubjectCategoryDomainSe
     public List<SubjectCategoryBo> queryCategoryAndLabel(SubjectCategoryBo subjectCategoryBo) {
         SubjectCategory subjectCategory = new SubjectCategory();
         Map<Long, List<SubjectLabelBO>> resultmap = new HashMap<>();
+        
         subjectCategory.setParentId(subjectCategoryBo.getId());
         subjectCategory.setIsDeleted(IsDeletedFlagEnum.UN_DELETED.getCode());
         List<SubjectCategory> subjectCategoryList = subjectCategoryService.queryCategory(subjectCategory);
+        
+        if (CollectionUtils.isEmpty(subjectCategoryList)){
+            return Collections.emptyList();
+        }
+        
         List<SubjectCategoryBo> boList = SubjectCategoryBOConverter.Instance.ConverterCategoryToBo(subjectCategoryList);
-        List<CompletableFuture<Map<Long, List<SubjectLabelBO>>>> FutureList =
-        boList.stream().map(category -> CompletableFuture.supplyAsync(() ->
-                getLabelBOList(category),labelThreadPool)).collect(Collectors.toList());
-        FutureList.forEach(future -> {
+        List<CompletableFuture<Map<Long, List<SubjectLabelBO>>>> futureList =
+        boList.stream()
+                .map(category -> CompletableFuture.supplyAsync(() ->
+                getLabelBOList(category),labelThreadPool))
+                .collect(Collectors.toList());
+        
+        futureList.forEach(future -> {
             try {
                 Map<Long, List<SubjectLabelBO>> labelMap = future.get();
                 if (!CollectionUtils.isEmpty(labelMap)){
@@ -120,10 +129,13 @@ public class SubjectCategoryDomainServiceImpl implements SubjectCategoryDomainSe
         SubjectMapping subjectMapping = new SubjectMapping();
         subjectMapping.setCategoryId(category.getId());
         List<SubjectMapping> mappingList = subjectMappingService.queryLabelId(subjectMapping);
+        
         if (CollectionUtils.isEmpty(mappingList)) {
-            return null;
+            return Collections.emptyMap();
         }
-        List<Long> labelIdList = mappingList.stream().map(SubjectMapping::getLabelId).collect(Collectors.toList());
+        List<Long> labelIdList = mappingList.stream()
+                .map(SubjectMapping::getLabelId)
+                .collect(Collectors.toList());
         List<SubjectLabel> labelList = subjectLabelService.batchQueryById(labelIdList);
         List<SubjectLabelBO> labelBOList = new LinkedList<>();
         labelList.forEach(label -> {
