@@ -13,4 +13,6 @@ public interface SubjectCategoryDomainService {
     List<SubjectCategoryBo> queryCategory(SubjectCategoryBo subjectCategoryBO);
     
     Boolean delete(SubjectCategoryBo subjectCategoryBO);
+    
+    List<SubjectCategoryBo> queryCategoryAndLabel(SubjectCategoryBo subjectCategoryBo);
 }
