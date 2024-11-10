@@ -3,22 +3,35 @@ package com.jingdianjichi.subject.application.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.base.Preconditions;
+//import com.jingdianjichi.auth.api.UserFeignService;
+import com.jingdianjichi.auth.entity.AuthUserDTO;
 import com.jingdianjichi.subject.application.convert.SubjectCategoryDTOConverter;
+import com.jingdianjichi.subject.application.convert.SubjectInfoDTOConverter;
+import com.jingdianjichi.subject.application.convert.SubjectLabelDTOConverter;
 import com.jingdianjichi.subject.application.dto.SubjectCategoryDTO;
+import com.jingdianjichi.subject.application.dto.SubjectInfoDTO;
+import com.jingdianjichi.subject.application.dto.SubjectLabelDTO;
+import com.jingdianjichi.subject.common.entity.PageResult;
 import com.jingdianjichi.subject.common.entity.Result;
 import com.jingdianjichi.subject.domain.convert.SubjectCategoryBOConverter;
 import com.jingdianjichi.subject.domain.entity.SubjectCategoryBo;
+import com.jingdianjichi.subject.domain.entity.SubjectInfoBO;
 import com.jingdianjichi.subject.domain.service.SubjectCategoryDomainService;
+import com.jingdianjichi.subject.domain.service.SubjectInfoDomainService;
+import com.jingdianjichi.subject.infra.basic.entity.SubjectInfoEs;
+import com.jingdianjichi.subject.infra.basic.service.SubjectEsService;
+import com.jingdianjichi.subject.infra.basic.service.SubjectInfoService;
+import com.jingdianjichi.subject.infra.basic.service.impl.SubjectEsServiceImpl;
+import com.jingdianjichi.subject.infra.entity.UserInfo;
+//import com.jingdianjichi.subject.infra.rpc.UserRpc;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.LinkedList;
 import java.util.List;
 
 @RestController
@@ -27,9 +40,10 @@ import java.util.List;
 public class SubjectCategoryController {
 
     @Resource
-    SubjectCategoryDomainService subjectCategoryDomainService;
-
+    private SubjectCategoryDomainService subjectCategoryDomainService;
     
+//    @Resource
+//    private UserRpc userRpc;
     /**
      * 新增题目分类
      */
@@ -120,9 +134,22 @@ public class SubjectCategoryController {
         Preconditions.checkNotNull(subjectCategoryDTO.getId(), "分类id不能为空");
         SubjectCategoryBo subjectCategoryBo = SubjectCategoryDTOConverter.Instance.subjectCategoryDtoToBo(subjectCategoryDTO);
         List<SubjectCategoryBo> subjectCategoryBoList = subjectCategoryDomainService.queryCategoryAndLabel(subjectCategoryBo);
-        
-        
-        return Result.ok();
+        List<SubjectCategoryDTO> dtoList = new LinkedList<>();
+        subjectCategoryBoList.forEach(bo -> {
+            SubjectCategoryDTO dto = SubjectCategoryDTOConverter.Instance.CategoryBoToDto(bo);
+            List<SubjectLabelDTO> labelDTOList = SubjectLabelDTOConverter.INSTANCE.convertBOToLabelDTOList(bo.getLabelBOList());
+            dto.setLabelDTOList(labelDTOList);
+            dtoList.add(dto);
+        });
+        return Result.ok(dtoList);
     }
+
+//    @GetMapping("/testFeign")
+//    public Result<Boolean> testFeign() {
+//        UserInfo userInfo = userRpc.getUserInfo("oQXNb6pr6L6i2-CiAlyPZlMwdwUY");
+//        return Result.ok(userInfo);
+//    }
+    
+
     
 }

@@ -1,5 +1,7 @@
 package com.jingdianjichi.subject.domain.service.impl;
 
+import com.jingdianjichi.subject.common.Utils.IdWorkerUtil;
+import com.jingdianjichi.subject.common.Utils.LoginUtil;
 import com.jingdianjichi.subject.common.entity.PageResult;
 import com.jingdianjichi.subject.common.enums.IsDeletedFlagEnum;
 import com.jingdianjichi.subject.domain.convert.SubjectInfoConverter;
@@ -9,8 +11,10 @@ import com.jingdianjichi.subject.domain.handler.subject.SubjectHandler;
 import com.jingdianjichi.subject.domain.handler.subject.SubjectHandlerFactory;
 import com.jingdianjichi.subject.domain.service.SubjectInfoDomainService;
 import com.jingdianjichi.subject.infra.basic.entity.SubjectInfo;
+import com.jingdianjichi.subject.infra.basic.entity.SubjectInfoEs;
 import com.jingdianjichi.subject.infra.basic.entity.SubjectLabel;
 import com.jingdianjichi.subject.infra.basic.entity.SubjectMapping;
+import com.jingdianjichi.subject.infra.basic.service.SubjectEsService;
 import com.jingdianjichi.subject.infra.basic.service.SubjectInfoService;
 import com.jingdianjichi.subject.infra.basic.service.SubjectLabelService;
 import com.jingdianjichi.subject.infra.basic.service.SubjectMappingService;
@@ -18,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,12 +43,17 @@ public class SubjectInfoDomainServiceImpl implements SubjectInfoDomainService {
     @Resource
     private SubjectLabelService subjectLabelService;
     
+    @Resource
+    private SubjectEsService subjectEsService;
+    
     @Override
     public void add(SubjectInfoBO subjectInfoBO) {
         if (log.isInfoEnabled()){
             log.info("SubjectInfoDomainServiceImpl add subjectInfoBO:{}",subjectInfoBO);
         }
         SubjectInfo subjectInfo = SubjectInfoConverter.INSTANCE.SubjectBOToSubjectInfo(subjectInfoBO);
+        subjectInfo.setIsDeleted(IsDeletedFlagEnum.UN_DELETED.getCode());
+        subjectInfoService.insert(subjectInfo);
         subjectInfoBO.setId(subjectInfo.getId());
         SubjectHandler subjectHandler = subjectHandlerFactory.getSubjectHandler(subjectInfo.getSubjectType());
         subjectHandler.add(subjectInfoBO);
@@ -60,8 +70,16 @@ public class SubjectInfoDomainServiceImpl implements SubjectInfoDomainService {
             });
         });
         subjectMappingService.batchInsert(mappingList);
-        
-        
+        //同步es
+        SubjectInfoEs subjectInfoEs = new SubjectInfoEs();
+        subjectInfoEs.setDocId(new IdWorkerUtil(1, 1, 1).nextId());
+        subjectInfoEs.setSubjectId(subjectInfo.getId());
+        subjectInfoEs.setSubjectAnswer(subjectInfoBO.getSubjectAnswer());
+        subjectInfoEs.setCreateTime(new Date().getTime());
+        subjectInfoEs.setCreateUser(LoginUtil.getLoginId());
+        subjectInfoEs.setSubjectName(subjectInfo.getSubjectName());
+        subjectInfoEs.setSubjectType(subjectInfo.getSubjectType());
+        subjectEsService.insert(subjectInfoEs);
     }
     
     @Override
@@ -102,5 +120,14 @@ public class SubjectInfoDomainServiceImpl implements SubjectInfoDomainService {
         List<String> labelNameList = labelList.stream().map(SubjectLabel::getLabelName).collect(Collectors.toList());
         subjectInfoBO.setLabelName(labelNameList);
         return subjectInfoBO;
+    }
+    
+    @Override
+    public PageResult<SubjectInfoEs> getSubjectPageBySearch(SubjectInfoBO subjectInfoBO) {
+        SubjectInfoEs subjectInfoEs = new SubjectInfoEs();
+        subjectInfoEs.setPageNo(subjectInfoBO.getPageNo());
+        subjectInfoEs.setPageSize(subjectInfoBO.getPageSize());
+        subjectInfoEs.setKeyWord(subjectInfoBO.getKeyWord());
+        return subjectEsService.querySubjectList(subjectInfoEs);
     }
 }

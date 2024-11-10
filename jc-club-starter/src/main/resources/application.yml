@@ -33,10 +33,6 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true #开启驼峰命名和下划线命名的自动转换
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
-logging:
-  level:
-    jc-club-infra.com.jingdianjichi.mapper: debug
 #  redis:
 #    # Redis数据库索引（默认为0）
 #    database: 0
@@ -58,13 +54,13 @@ logging:
 #        max-idle: 10
 #        # 连接池中的最小空闲连接
 #        min-idle: 0
-#logging:
-#  config: classpath:log4j2-spring.xml
-#es:
-#  cluster:
-#    esConfigs[0]:
-#      name: 73438a827b55
-#      nodes: 117.72.14.166:9200
+logging:
+  config: classpath:log4j2-spring.xml
+es:
+  cluster:
+    esConfigs[0]:
+      name: 149742f3307e
+      nodes: 192.168.94.128:9200
 #xxl:
 #  job:
 #    admin:

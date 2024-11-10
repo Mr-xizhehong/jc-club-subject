@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * 线程池的config管理
  *
- * @author: ChickenWing
- * @date: 2023/11/26
  */
 @Configuration
 public class ThreadPoolConfig {
